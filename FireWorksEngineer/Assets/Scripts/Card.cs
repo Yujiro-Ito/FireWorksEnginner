@@ -13,7 +13,7 @@ public class Card : MonoBehaviour {
 	}
 
 	//--const--
-	private const float MOVE_TIME = 1f;
+	private const float MOVE_TIME = 0.8f;
 
 	//--field--
 	private CardManager _parent;
@@ -24,12 +24,17 @@ public class Card : MonoBehaviour {
 	private Vector3 _newMousePosition;
 	private bool _dead;
 	private RectTransform _rectTransform;
-	private Vector3 _mySize;
-	private Text _myText;
-	private Image _myImage;
+	private Vector3 _cardSize;
+	private Text _cardText;
+	private Image _cardImage;
+	private Rect _cardRect;
+	public GameObject ShotArea;
+	private Rect _shotAreaRect;
 
 	//--propaties--
 	public bool isDead{ get{return _dead; }}
+	public CardParam GetCardParam{ get{ return _cardParam; }}
+	public Vector3 OriginPosition{ get{ return _originPosition; } set{ _originPosition = value; }}
 
 	//--method--
 	//初期化に必要な処理を集めたメソッド
@@ -42,13 +47,19 @@ public class Card : MonoBehaviour {
 		InitializeCardParam(color, cardNumber);
 		//変数の初期化
 		_rectTransform = GetComponent<RectTransform>();
-		_mySize = _rectTransform.sizeDelta;
+		_cardSize = _rectTransform.sizeDelta;
 		_dead = false;
-		_myText = GetComponentInChildren<Text>();
-		_myImage = GetComponent<Image>();
+		_cardText = GetComponentInChildren<Text>();
+		_cardImage = GetComponent<Image>();
+		_cardRect = new Rect(0, 0, 0, 0);
 		//色と数値テキストの変更
 		ChangeCardColor();
-		_myText.text = _cardParam.StateNumber.ToString();
+		_cardText.text = _cardParam.StateNumber.ToString();
+		//ショットエリアの矩形エリア情報を取得
+		RectTransform rt = ShotArea.GetComponent<RectTransform>();
+		float x = ShotArea.transform.localPosition.x - rt.sizeDelta.x / 2;
+		float y = ShotArea.transform.localPosition.y - rt.sizeDelta.y / 2;
+		_shotAreaRect = new Rect(x, y, rt.sizeDelta.x, rt.sizeDelta.y);
 	}
 
 	public void InitializeCard(cardColor color, int cardNumber){
@@ -60,7 +71,7 @@ public class Card : MonoBehaviour {
 		_dead = false;
 		//色と数値テキストの変更
 		ChangeCardColor();
-		_myText.text = _cardParam.StateNumber.ToString();
+		_cardText.text = _cardParam.StateNumber.ToString();
 	}
 	
 	// Update is called once per frame
@@ -118,7 +129,8 @@ public class Card : MonoBehaviour {
 		_newMousePosition = Input.mousePosition;
 		_newMousePosition.z = 10f;
 
-		transform.localPosition = (Input.mousePosition) * 2 - new Vector3(Screen.width / 2, Screen.height / 2, 0) - _mySize;
+		Vector3 newPostion = Input.mousePosition - new Vector3(Screen.width / 2, Screen.height / 2);
+		transform.localPosition = newPostion;
 		//指を離したか確認
 		if(Input.GetMouseButtonUp(0)){
 			HoldEnd();
@@ -126,12 +138,36 @@ public class Card : MonoBehaviour {
 	}
 	private void HoldEnd(){
 		//離した瞬間にほかのカードとあたり判定して消えるか判定する
-		int rand = Random.Range(0, 2);
-		if(rand == 0){
-			MoveStart();
-		} else {
+		Vector3 targetPos;
+		for(int i = 0; i < _parent.GetCards.Length; i++){
+			//カードの位置を取得して矩形オブジェクトをセット
+			targetPos = _parent.GetCards[i].transform.localPosition;
+			_cardRect.Set(targetPos.x - _cardSize.x / 2, targetPos.y - _cardSize.y / 2, _cardSize.x, _cardSize.y / 2);
+			//自カードは除外
+			if(Vector3.Magnitude(targetPos - transform.localPosition) != 0){
+				//他カードと当たっていれば他カードとの条件を比較
+				if(_cardRect.Contains(Input.mousePosition - new Vector3(Screen.width / 2, Screen.height / 2)) == true){
+					//色と数値が一致しているか
+					if(_parent.GetCards[i].GetCardParam.CardColor == _cardParam.CardColor && 
+					_parent.GetCards[i].GetCardParam.StateNumber == _cardParam.StateNumber){
+						//どちらも一致していれば相手カードを一段階強化して自壊する。
+						_parent.GetCards[i].PowerUp();
+						_dead = true;	
+					} else {
+						//色と数値が一致してなければ位置交換
+						ChangePosition(_parent.GetCards[i]);
+					}
+				}
+			}
+		}
+
+		//どのカードにも当たらなければショットエリアとのあたり判定
+		if(_dead == false && _shotAreaRect.Contains(Input.mousePosition - new Vector3(Screen.width / 2, Screen.height / 2))){
 			_dead = true;
 		}
+
+		//死んでない（どのカードとも条件が合わなかった）場合、元に戻る
+		if(_dead == false) MoveStart();
 	}
 
 	//カード情報の初期化
@@ -143,15 +179,32 @@ public class Card : MonoBehaviour {
 	private void ChangeCardColor(){
 		switch(_cardParam.CardColor){
 			case cardColor.red:
-				_myImage.color = Color.red;
+				_cardImage.color = Color.red;
 				break;
 			case cardColor.green:
-				_myImage.color = Color.green;
+				_cardImage.color = Color.green;
 				break;
 			case cardColor.yellow:
-				_myImage.color = Color.yellow;
+				_cardImage.color = Color.yellow;
 				break;
 		}
+	}
+
+	//カードの値を一段階強化する
+	private void PowerUp(){
+		_cardParam.StateUp();
+		_cardText.text = _cardParam.StateNumber.ToString();
+	}
+
+	//カードの位置を交換する
+	public void ChangePosition(Card changePartner){
+		//位置の交換
+		Vector3 tmp = changePartner.OriginPosition;
+		changePartner.OriginPosition = _originPosition;
+		_originPosition = tmp;
+		//相手との位置交換開始
+		changePartner.MoveStart();
+		MoveStart();
 	}
 }
 

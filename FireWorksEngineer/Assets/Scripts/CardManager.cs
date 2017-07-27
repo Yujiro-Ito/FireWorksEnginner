@@ -5,9 +5,12 @@ using UnityEngine;
 
 public class CardManager : MonoBehaviour {
 	//--const--
-	private const int CARD_MAX = 4;
+	public const int CARD_NUM_MAX = 3; //カードが持つパワーの値の最大値(+1)
+	public const int CARD_COLOR_MAX = 3;
+
 	//--field--
 	private Card[] _cards;
+	public Card[] GetCards{ get{ return _cards; }}
 
 	// Use this for initialization
 	void Start () {
@@ -33,8 +36,8 @@ public class CardManager : MonoBehaviour {
 
 	//カードの初期化関数
 	void ResetCard(int suffix, bool first){
-		cardColor color = (cardColor)Enum.ToObject(typeof(cardColor), Rand(0, 3));
-		int cardNumber = Rand(1, 4);
+		cardColor color = (cardColor)Enum.ToObject(typeof(cardColor), Rand(0, CARD_COLOR_MAX));
+		int cardNumber = Rand(1, CARD_NUM_MAX);
 		if(first){
 			_cards[suffix].FirstInitializeCard(color, cardNumber, this);
 		} else {
