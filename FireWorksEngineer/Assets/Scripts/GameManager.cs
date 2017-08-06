@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour {
 		get{
 			if(_singleton == null){
 				_singletonObject = new GameObject("GameManager");
+				DontDestroyOnLoad(_singletonObject);
 				_singletonObject.AddComponent<GameManager>();
 				_singleton = _singletonObject.GetComponent<GameManager>();
 			}
@@ -19,7 +20,7 @@ public class GameManager : MonoBehaviour {
 	}
 
 	//----const---
-	private const int GAME_TIME = 60;
+	private const int GAME_TIME = 10;
 	private const int COMBO_TIME = 3;
 	private int[] _scoreList = {100, 150, 300, 600, 1400, 3000, 9000, 18000, 10000000};
 	private float[,] _comboList = {{0, 1f}, {1, 1.01f}, {2, 1.02f}, {3, 1.04f}, {4, 1.07f}, {5, 1.09f}, {6, 1.11f}, {7, 1.2f}, {8, 1.4f}, {15, 1.6f}, {30, 2f}};

@@ -10,7 +10,7 @@ public class DestroyObj : MonoBehaviour {
 	}
 
 	private IEnumerator DestroyObject(){
-		yield return new WaitForSeconds(5.5f);
+		yield return new WaitForSeconds(5f);
 		Destroy(this.gameObject);
 	}
 	

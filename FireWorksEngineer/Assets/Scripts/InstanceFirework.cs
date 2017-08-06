@@ -55,7 +55,7 @@ public class InstanceFirework : MonoBehaviour {
 		//パーティクルを再生する
 		ParticleSystem sys = obj.transform.Find("Start").GetComponent<ParticleSystem>();
 		ParticleAction(()=>{
-			sys.Simulate(2f, true, false);
+			sys.Simulate(2.5f, true, false);
 			sys.Play();
 		});
 		//色を変更
