@@ -30,6 +30,7 @@ public class Card : MonoBehaviour {
 	private Rect _cardRect;
 	public GameObject ShotArea;
 	private Rect _shotAreaRect;
+	private InstanceFirework _insFireworks;
 
 	//--propaties--
 	public bool isDead{ get{return _dead; }}
@@ -43,7 +44,7 @@ public class Card : MonoBehaviour {
 		_parent = manager;
 		_originPosition = transform.localPosition;
 		transform.localPosition = _parent.transform.localPosition;
-		MoveStart();
+		_cardState = cardState.stop;
 		InitializeCardParam(color, cardNumber);
 		//変数の初期化
 		_rectTransform = GetComponent<RectTransform>();
@@ -52,6 +53,7 @@ public class Card : MonoBehaviour {
 		_cardText = GetComponentInChildren<Text>();
 		_cardImage = GetComponent<Image>();
 		_cardRect = new Rect(0, 0, 0, 0);
+		_insFireworks = FindObjectOfType<InstanceFirework>();
 		//色と数値テキストの変更
 		ChangeCardColor();
 		_cardText.text = _cardParam.StateNumber.ToString();
@@ -100,14 +102,20 @@ public class Card : MonoBehaviour {
 	private void Stay(){}
 	//押したときのイベントハンドラ
 	public void Click(){
-		HoldStart();
+		if(_cardState == cardState.stay){
+			HoldStart();
+		}
 	}
 
 
 	//移動状態での処理
-	private void MoveStart(){
+	public void MoveStart(){
 		_cardState = cardState.move;
 		iTween.MoveTo(this.gameObject, iTween.Hash("position", _originPosition, "time", MOVE_TIME, "oncomplete", "MoveComplete", "oncompletetarget", this.gameObject, "isLocal", true));
+	}
+
+	public void FinishGame(){
+		_cardState = cardState.stop;
 	}
 
 	private void Move(){
@@ -139,14 +147,15 @@ public class Card : MonoBehaviour {
 	private void HoldEnd(){
 		//離した瞬間にほかのカードとあたり判定して消えるか判定する
 		Vector3 targetPos;
+		Vector3 touchPos = Input.mousePosition - new Vector3(Screen.width / 2, Screen.height / 2);
 		for(int i = 0; i < _parent.GetCards.Length; i++){
 			//カードの位置を取得して矩形オブジェクトをセット
 			targetPos = _parent.GetCards[i].transform.localPosition;
-			_cardRect.Set(targetPos.x - _cardSize.x / 2, targetPos.y - _cardSize.y / 2, _cardSize.x, _cardSize.y / 2);
+			_cardRect.Set(targetPos.x - _cardSize.x / 2, targetPos.y - _cardSize.y / 2, _cardSize.x, _cardSize.y);
 			//自カードは除外
 			if(Vector3.Magnitude(targetPos - transform.localPosition) != 0){
 				//他カードと当たっていれば他カードとの条件を比較
-				if(_cardRect.Contains(Input.mousePosition - new Vector3(Screen.width / 2, Screen.height / 2)) == true){
+				if(_cardRect.Contains(touchPos) == true){
 					//色と数値が一致しているか
 					if(_parent.GetCards[i].GetCardParam.CardColor == _cardParam.CardColor && 
 					_parent.GetCards[i].GetCardParam.StateNumber == _cardParam.StateNumber){
@@ -162,7 +171,9 @@ public class Card : MonoBehaviour {
 		}
 
 		//どのカードにも当たらなければショットエリアとのあたり判定
-		if(_dead == false && _shotAreaRect.Contains(Input.mousePosition - new Vector3(Screen.width / 2, Screen.height / 2))){
+		if(_dead == false && _shotAreaRect.Contains(touchPos)){
+			GameManager.Instance.ScoreUp(_cardParam.StateNumber);
+			_insFireworks.Instance(touchPos, _cardParam.StateNumber, _cardParam.CardColor);
 			_dead = true;
 		}
 

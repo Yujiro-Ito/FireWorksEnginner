@@ -19,6 +19,8 @@ public class CardManager : MonoBehaviour {
 		for(int i = 0; i < _cards.Length; i++){
 			ResetCard(i, true);
 		}
+		GameManager.Instance.AddStartAction("cardStart", GameStart);
+		GameManager.Instance.AddFinishAction("cardFinish", FinishGame);
 	}
 	
 	// Update is called once per frame
@@ -49,5 +51,18 @@ public class CardManager : MonoBehaviour {
 	int Rand(int min, int max){
 		int result = UnityEngine.Random.Range(min, max);
 		return result;
+	}
+
+	//ゲームスタート時にカードをアクティブにする
+	public void GameStart(){
+		for(int i = 0; i < _cards.Length; i++){
+			_cards[i].MoveStart();
+		}
+	}
+
+	public void FinishGame(){
+		for(int i = 0; i < _cards.Length; i++){
+			_cards[i].FinishGame();
+		}
 	}
 }
