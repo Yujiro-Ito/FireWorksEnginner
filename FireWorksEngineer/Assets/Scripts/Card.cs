@@ -136,9 +136,12 @@ public class Card : MonoBehaviour {
 		//オブジェクトの移動
 		_newMousePosition = Input.mousePosition;
 		_newMousePosition.z = 10f;
-
-		Vector3 newPostion = Input.mousePosition - new Vector3(Screen.width / 2, Screen.height / 2);
-		transform.localPosition = newPostion;
+		_newMousePosition = Camera.main.ScreenToWorldPoint(_newMousePosition);
+		_newMousePosition.z = 0;
+		transform.position = _newMousePosition;
+		Vector3 s = transform.localPosition;
+		s.z = 0;
+		transform.position = s;
 		//指を離したか確認
 		if(Input.GetMouseButtonUp(0)){
 			HoldEnd();
