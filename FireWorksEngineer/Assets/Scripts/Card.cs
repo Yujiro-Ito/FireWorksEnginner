@@ -134,14 +134,18 @@ public class Card : MonoBehaviour {
 	}
 	private void Hold(){
 		//オブジェクトの移動
-		_newMousePosition = Input.mousePosition;
-		_newMousePosition.z = 10f;
-		_newMousePosition = Camera.main.ScreenToWorldPoint(_newMousePosition);
-		_newMousePosition.z = 0;
-		transform.position = _newMousePosition;
-		Vector3 s = transform.localPosition;
-		s.z = 0;
-		transform.position = s;
+		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+		RaycastHit hit;
+		if(Physics.Raycast(ray, out hit)){
+			Transform rayHit = hit.transform;
+			if(rayHit.tag == "Hit"){
+				_newMousePosition = hit.point;
+				_newMousePosition = Camera.main.WorldToScreenPoint(_newMousePosition);
+				_newMousePosition.z = 0;
+			}
+		}
+
+		transform.localPosition = _newMousePosition;
 		//指を離したか確認
 		if(Input.GetMouseButtonUp(0)){
 			HoldEnd();
